@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNAUTHORIZED_ACCESS_REQUIRED</title>
+    <style>
+        :root {
+            --neon-green: #00ff41;
+            --dark-bg: #050505;
+            --glitch-red: #ff1111;
+            --ghost-white: #e0e0e0;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: var(--neon-green);
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        /* CRT Scanline Overlay */
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            z-index: 10;
+            background-size: 100% 3px, 3px 100%;
+            pointer-events: none;
+        }
+
+        .login-box {
+            border: 2px solid #1a1a1a;
+            padding: 50px;
+            background: black;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.1);
+            position: relative;
+            z-index: 5;
+            width: 380px;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 1.2rem;
+            letter-spacing: 8px;
+            margin-bottom: 30px;
+            color: var(--glitch-red);
+            text-shadow: 2px 2px black, 0 0 10px red;
+            animation: pulse 1.5s infinite;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            font-size: 0.7rem;
+            margin-bottom: 8px;
+            color: #555;
+        }
+
+        input {
+            width: 100%;
+            background: #0a0a0a;
+            border: 1px solid #222;
+            color: var(--ghost-white);
+            padding: 12px;
+            outline: none;
+            box-sizing: border-box;
+            transition: 0.5s;
+        }
+
+        input:focus {
+            border-color: var(--glitch-red);
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
+        }
+
+        .btn-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            color: var(--glitch-red);
+            border: 1px solid var(--glitch-red);
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: var(--glitch-red);
+            color: black;
+            box-shadow: 0 0 20px var(--glitch-red);
+        }
+
+        #audio-init {
+            margin-bottom: 20px;
+            font-size: 0.6rem;
+            color: #444;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .status-msg {
+            margin-top: 20px;
+            font-size: 0.7rem;
+            height: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="overlay"></div>
+
+    <div id="audio-init" onclick="initAudio()">[ CLICK TO INITIALIZE SYSTEM AUDIO ]</div>
+
+    <div class="login-box">
+        <h2>Alpha_03 login form</h2>
+        
+        <div class="input-group">
+            <label>IDENTIFIER</label>
+            <input type="text" id="username" placeholder="NAME...">
+        </div>
+
+        <div class="input-group">
+            <label>CREDENTIAL_KEY</label>
+            <input type="password" id="password" placeholder="PASSWORD...">
+        </div>
+
+        <div class="btn-container">
+            <button onclick="processLogin()">Enter</button>
+        </div>
+
+        <div id="status" class="status-msg"></div>
+    </div>
+
+    <audio id="horrorMusic" loop>
+        <source src="https://www.chosic.com/wp-content/uploads/2021/07/The-Ice-Giants.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        const music = document.getElementById('horrorMusic');
+        
+        function initAudio() {
+            music.play();
+            document.getElementById('audio-init').innerText = "[ AUDIO_LINKED ]";
+            document.getElementById('audio-init').style.color = "#00ff41";
+        }
+
+        function processLogin() {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            const status = document.getElementById('status');
+
+            status.style.color = "var(--neon-green)";
+            status.innerText = "SCRAPING_HEADERS...";
+
+            setTimeout(() => {
+                // Admin Logic
+                if (user === "Anvay" && pass === "Anvay123") {
+                    status.innerText = "ADMIN_ACCESS_GRANTED. REDIRECTING...";
+                    setTimeout(() => {
+                        window.location.href = "admin.html";
+                    }, 1000);
+                } 
+                // Guest Logic
+                else if (user === "Anvay" && pass === "Guest") {
+                    status.innerText = "GUEST_LEVEL_BYPASS. REDIRECTING...";
+                    setTimeout(() => {
+                        window.location.href = "guest.html";
+                    }, 1000);
+                } 
+                // Failure Logic
+                else {
+                    status.style.color = "var(--glitch-red)";
+                    status.innerText = "ACCESS_DENIED. TRACE_PROGRAM_STARTED.";
+                }
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
+
