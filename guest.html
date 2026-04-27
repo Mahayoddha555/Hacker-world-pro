@@ -1,4 +1,4 @@
-load
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -61,27 +61,53 @@ load
             100% { r: 4; opacity: 0; }
         }
 
-        .input-cursor {
-            display: inline-block;
-            width: 8px;
-            height: 15px;
-            background: var(--neon-green);
-            animation: blink 1s infinite;
-            vertical-align: middle;
-        }
-
-        @keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
-
         .glitch-border {
             box-shadow: 0 0 10px rgba(0, 255, 65, 0.1);
-            transition: box-shadow 0.3s;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .glitch-border:hover {
-            box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+
+        .system-locked {
+            filter: blur(8px) grayscale(100%);
+            pointer-events: none;
+            opacity: 0.3;
+            transition: all 1s ease-out;
+        }
+
+        .system-unlocked {
+            filter: blur(0) grayscale(0);
+            pointer-events: auto;
+            opacity: 1;
+        }
+
+        .access-overlay {
+            background: radial-gradient(circle at center, rgba(0, 255, 65, 0.05) 0%, transparent 70%);
+            transition: opacity 1s ease, visibility 1s;
+        }
+
+        @keyframes noise {
+            0% { transform: translate(0,0) }
+            10% { transform: translate(-5%,-5%) }
+            20% { transform: translate(-10%,5%) }
+            30% { transform: translate(5%,-10%) }
+            40% { transform: translate(-5%,15%) }
+            50% { transform: translate(-10%,5%) }
+            60% { transform: translate(15%,0) }
+            70% { transform: translate(0,10%) }
+            80% { transform: translate(-15%,0) }
+            90% { transform: translate(10%,5%) }
+            100% { transform: translate(5%,0) }
+        }
+
+        .noise-bg {
+            position: fixed; top: -50%; left: -50%; width: 200%; height: 200%;
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/5/5a/Canal_Effect.png');
+            opacity: 0.02; pointer-events: none; z-index: 1;
+            animation: noise 0.2s infinite;
         }
     </style>
 </head>
 <body class="h-screen w-screen relative crt-overlay">
+    <div class="noise-bg"></div>
     <div class="scanline"></div>
 
     <!-- HEADER: GLOBAL OVERWATCH -->
@@ -92,70 +118,70 @@ load
                 <span class="text-xs font-bold tracking-[0.4em] uppercase">Phantom Mainframe</span>
             </div>
             <div class="h-4 w-px bg-white/10"></div>
-            <div class="flex gap-4 text-[10px] tracking-widest opacity-60 uppercase">
+            <div id="header-metrics" class="flex gap-4 text-[10px] tracking-widest opacity-60 uppercase transition-opacity duration-500 opacity-0">
                 <span id="utc-clock">UTC: 00:00:00</span>
                 <span id="uptime">Uptime: 0s</span>
             </div>
         </div>
 
         <div id="security-badge" class="flex items-center gap-3 bg-[#00FF41]/5 border border-[#00FF41]/30 px-4 py-1.5 rounded-sm transition-all duration-1000">
-            <span id="status-label" class="text-[10px] font-bold uppercase tracking-widest">Scanning...</span>
-            <div id="status-icon" class="animate-spin text-[#00FF41]">
-                <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+            <span id="status-label" class="text-[10px] font-bold uppercase tracking-widest">Awaiting Verification</span>
+            <div id="status-icon" class="text-[#00FF41]">
+                <i data-lucide="refresh-cw" class="w-3 h-3 animate-spin"></i>
             </div>
         </div>
     </header>
 
-    <!-- LEFT SIDEBAR: ACTIVE CLI -->
-    <aside class="fixed left-4 top-20 bottom-4 w-80 hidden xl:flex flex-col gap-4 z-50">
-        <div class="flex-1 bg-black/80 border border-[#00FF41]/20 rounded-sm flex flex-col overflow-hidden">
-            <div class="bg-[#00FF41]/10 border-b border-[#00FF41]/20 p-2 flex items-center justify-between">
-                <span class="text-[9px] font-bold uppercase tracking-widest">Interactive Shell</span>
-                <i data-lucide="terminal" class="w-3 h-3"></i>
+    <!-- UI WRAPPER FOR LOCKABLE CONTENT -->
+    <div id="system-workspace" class="system-locked h-full w-full">
+        <!-- LEFT SIDEBAR: ACTIVE CLI -->
+        <aside class="fixed left-4 top-20 bottom-4 w-80 hidden xl:flex flex-col gap-4 z-50">
+            <div class="flex-1 bg-black/80 border border-[#00FF41]/20 rounded-sm flex flex-col overflow-hidden">
+                <div class="bg-[#00FF41]/10 border-b border-[#00FF41]/20 p-2 flex items-center justify-between">
+                    <span class="text-[9px] font-bold uppercase tracking-widest">Interactive Shell</span>
+                    <i data-lucide="terminal" class="w-3 h-3"></i>
+                </div>
+                <div id="cli-output" class="flex-1 p-4 text-[10px] font-mono space-y-1 overflow-y-auto terminal-scroll text-[#00FF41]/80">
+                    <div class="opacity-40">SYSTEM_SHELL_ID: GUEST_004</div>
+                </div>
+                <div class="p-2 border-t border-[#00FF41]/20 bg-black flex items-center gap-2">
+                    <span class="text-[10px]">$</span>
+                    <input id="cli-input" type="text" class="bg-transparent border-none outline-none text-[10px] text-[#00FF41] w-full" autocomplete="off">
+                </div>
             </div>
-            <div id="cli-output" class="flex-1 p-4 text-[10px] font-mono space-y-1 overflow-y-auto terminal-scroll text-[#00FF41]/80">
-                <div class="opacity-40">PHANTOM-OS v2.4.0 Kernel Initialized.</div>
-            </div>
-            <div class="p-2 border-t border-[#00FF41]/20 bg-black flex items-center gap-2">
-                <span class="text-[10px]">$</span>
-                <input id="cli-input" type="text" class="bg-transparent border-none outline-none text-[10px] text-[#00FF41] w-full" autofocus autocomplete="off">
-            </div>
-        </div>
 
-        <div class="h-40 bg-black/80 border border-[#00FF41]/20 p-4 flex flex-col">
-            <span class="text-[9px] uppercase tracking-widest opacity-40 mb-3">Neural Link Saturation</span>
-            <canvas id="wave-canvas" class="flex-1 w-full"></canvas>
-        </div>
-    </aside>
-
-    <!-- RIGHT SIDEBAR: NODE MAP & THREATS -->
-    <aside class="fixed right-4 top-20 bottom-4 w-80 hidden xl:flex flex-col gap-4 z-50">
-        <div class="flex-1 bg-black/80 border border-[#00FF41]/20 p-2 flex flex-col overflow-hidden">
-            <div class="text-[9px] uppercase tracking-widest opacity-40 mb-2 px-2">Active Incursion Map</div>
-            <div class="flex-1 relative bg-black/40 border border-white/5 rounded-sm overflow-hidden">
-                <svg viewBox="0 0 200 100" class="w-full h-full opacity-30">
-                    <path d="M20,40 Q40,10 60,30 T100,50 T140,20 T180,40" fill="none" stroke="#00FF41" stroke-width="0.5" />
-                    <circle cx="45" cy="25" r="2" fill="#00FF41" class="pulsing-dot" />
-                    <circle cx="120" cy="55" r="2" fill="#FF3131" class="pulsing-dot" />
-                    <circle cx="160" cy="25" r="2" fill="#00FF41" class="pulsing-dot" />
-                </svg>
-                <div class="absolute bottom-2 left-2 text-[8px] opacity-40">NODES: 12 ACTIVE</div>
+            <div class="h-40 bg-black/80 border border-[#00FF41]/20 p-4 flex flex-col">
+                <span class="text-[9px] uppercase tracking-widest opacity-40 mb-3">Neural Link Saturation</span>
+                <canvas id="wave-canvas" class="flex-1 w-full"></canvas>
             </div>
-        </div>
+        </aside>
 
-        <div class="flex-1 bg-black/80 border border-[#00FF41]/20 flex flex-col overflow-hidden">
-            <div class="bg-[#FF3131]/10 border-b border-[#FF3131]/20 p-2 text-[9px] font-bold uppercase tracking-widest text-[#FF3131]">Live Threats</div>
-            <div id="threat-feed" class="flex-1 p-3 text-[9px] font-mono space-y-2 overflow-hidden text-[#FF3131]/70">
-                <!-- Injected threats -->
+        <!-- RIGHT SIDEBAR: NODE MAP & THREATS -->
+        <aside class="fixed right-4 top-20 bottom-4 w-80 hidden xl:flex flex-col gap-4 z-50">
+            <div class="flex-1 bg-black/80 border border-[#00FF41]/20 p-2 flex flex-col overflow-hidden">
+                <div class="text-[9px] uppercase tracking-widest opacity-40 mb-2 px-2">Active Incursion Map</div>
+                <div class="flex-1 relative bg-black/40 border border-white/5 rounded-sm overflow-hidden">
+                    <svg viewBox="0 0 200 100" class="w-full h-full opacity-30">
+                        <path d="M20,40 Q40,10 60,30 T100,50 T140,20 T180,40" fill="none" stroke="#00FF41" stroke-width="0.5" />
+                        <circle cx="45" cy="25" r="2" fill="#00FF41" class="pulsing-dot" />
+                        <circle cx="120" cy="55" r="2" fill="#FF3131" class="pulsing-dot" />
+                        <circle cx="160" cy="25" r="2" fill="#00FF41" class="pulsing-dot" />
+                    </svg>
+                    <div class="absolute bottom-2 left-2 text-[8px] opacity-40">NODES: 12 ACTIVE</div>
+                </div>
             </div>
-        </div>
-    </aside>
 
-    <!-- CENTER: SYSTEM OVERVIEW -->
-    <main class="h-full flex items-center justify-center p-6 xl:px-[22rem]">
-        <div class="w-full max-w-2xl space-y-6">
-            <!-- System Stats Grid -->
-            <div class="grid grid-cols-4 gap-3">
+            <div class="flex-1 bg-black/80 border border-[#00FF41]/20 flex flex-col overflow-hidden">
+                <div class="bg-[#FF3131]/10 border-b border-[#FF3131]/20 p-2 text-[9px] font-bold uppercase tracking-widest text-[#FF3131]">Live Threats</div>
+                <div id="threat-feed" class="flex-1 p-3 text-[9px] font-mono space-y-2 overflow-hidden text-[#FF3131]/70">
+                    <!-- Injected threats -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- CENTER: SYSTEM OVERVIEW (STATS) -->
+        <main class="h-full flex flex-col items-center justify-center p-6 xl:px-[22rem] gap-6">
+            <div class="w-full max-w-2xl grid grid-cols-4 gap-3">
                 <div class="bg-black/80 border border-[#00FF41]/20 p-4 text-center">
                     <div id="stat-nodes" class="text-lg font-bold">12</div>
                     <div class="text-[8px] uppercase opacity-40 tracking-tighter">Nodes</div>
@@ -174,27 +200,7 @@ load
                 </div>
             </div>
 
-            <!-- Central Access Portal -->
-            <div id="main-frame" class="bg-black/90 border border-[#00FF41]/30 p-12 relative overflow-hidden glitch-border transition-all duration-700">
-                <div class="relative z-10 flex flex-col items-center">
-                    <div class="w-20 h-20 border-2 border-[#00FF41] rounded-full flex items-center justify-center mb-8 shadow-[0_0_20px_rgba(0,255,65,0.1)]">
-                        <i data-lucide="power" class="w-10 h-10 animate-pulse text-[#00FF41]"></i>
-                    </div>
-                    <h2 class="text-2xl font-bold tracking-[0.6em] uppercase text-center mb-4">Initialize Session</h2>
-                    <p class="text-[10px] opacity-40 tracking-[0.2em] uppercase mb-12 text-center">Protocol: direct-guest-access // bypass: null</p>
-                    
-                    <button id="entry-btn" class="w-full bg-transparent border-2 border-[#00FF41] py-5 text-sm font-bold tracking-[0.8em] uppercase hover:bg-[#00FF41] hover:text-black transition-all duration-500 group relative">
-                        <span class="relative z-10">Sync Mainframe</span>
-                        <div class="absolute inset-0 bg-[#00FF41] scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-500 z-0"></div>
-                    </button>
-                </div>
-                
-                <!-- Background Deco -->
-                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#00FF41]/30 to-transparent"></div>
-            </div>
-
-            <!-- Siphon Progress (Hidden initially) -->
-            <div id="siphon-module" class="hidden space-y-2">
+            <div id="siphon-module" class="w-full max-w-2xl hidden space-y-2">
                 <div class="flex justify-between text-[10px] uppercase tracking-widest">
                     <span>Siphoning Data Packet...</span>
                     <span id="siphon-percent">0%</span>
@@ -203,8 +209,29 @@ load
                     <div id="siphon-bar" class="h-full bg-[#00FF41] w-0 transition-all"></div>
                 </div>
             </div>
+        </main>
+    </div>
+
+    <!-- CENTRAL ACCESS PORTAL (OVERLAY) -->
+    <div id="access-overlay" class="fixed inset-0 z-[150] flex items-center justify-center p-6 access-overlay">
+        <div id="main-frame" class="w-full max-w-xl bg-black/95 border border-[#00FF41]/30 p-12 relative overflow-hidden glitch-border shadow-[0_0_50px_rgba(0,0,0,1)]">
+            <div id="frame-content" class="relative z-10 flex flex-col items-center">
+                <div id="power-icon-container" class="w-20 h-20 border-2 border-[#00FF41] rounded-full flex items-center justify-center mb-8 shadow-[0_0_20px_rgba(0,255,65,0.1)] transition-all duration-500">
+                    <i id="power-icon" data-lucide="power" class="w-10 h-10 text-[#00FF41] animate-pulse"></i>
+                </div>
+                <h2 id="access-title" class="text-2xl font-bold tracking-[0.6em] uppercase text-center mb-4 transition-all duration-500">Initialize Session</h2>
+                <p id="access-subtitle" class="text-[10px] opacity-40 tracking-[0.2em] uppercase mb-12 text-center">Protocol: direct-guest-access // bypass: null</p>
+                
+                <button id="entry-btn" class="w-full bg-transparent border-2 border-[#00FF41] py-5 text-sm font-bold tracking-[0.8em] uppercase hover:bg-[#00FF41] hover:text-black transition-all duration-500 group relative overflow-hidden">
+                    <span id="btn-text" class="relative z-10">Sync Mainframe</span>
+                    <div class="absolute inset-0 bg-[#00FF41] scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-500 z-0"></div>
+                </button>
+            </div>
+            
+            <!-- Loading Bar (hidden by default) -->
+            <div id="init-loader" class="absolute bottom-0 left-0 w-0 h-1 bg-[#00FF41] transition-all duration-[2000ms] ease-in-out"></div>
         </div>
-    </main>
+    </div>
 
     <!-- SECURITY GATE MODAL -->
     <div id="gate-overlay" class="fixed inset-0 z-[2000] bg-black/95 backdrop-blur-2xl items-center justify-center p-6 hidden">
@@ -221,7 +248,7 @@ load
 
             <div class="p-8 space-y-8">
                 <div class="text-[#FF3131]/90 text-sm leading-relaxed font-bold">
-                    CONNECTION WARNING: No encrypted VPN tunnel found. Your raw metadata is currently broadcasting to global relays. 
+                    CONNECTION WARNING: No encrypted VPN tunnel found. Your raw metadata is broadcasting. 
                     <br><br>
                     <span class="underline">PERIMETER_STATUS: VULNERABLE</span>
                 </div>
@@ -240,7 +267,6 @@ load
                     <button id="gate-proceed" class="w-full bg-[#FF3131]/20 border-2 border-[#FF3131] text-[#FF3131] py-4 text-xs font-bold tracking-[0.5em] uppercase hover:bg-[#FF3131] hover:text-black transition-all">
                         Proceed Exposed
                     </button>
-                    <p class="text-[9px] text-center opacity-40 uppercase tracking-[0.3em]">Authorized guest discretion advised</p>
                 </div>
             </div>
         </div>
@@ -252,20 +278,62 @@ load
         const cliOutput = document.getElementById('cli-output');
         const cliInput = document.getElementById('cli-input');
         const gateOverlay = document.getElementById('gate-overlay');
-        const uptimeEl = document.getElementById('uptime');
-        const clockEl = document.getElementById('utc-clock');
-        const siphonModule = document.getElementById('siphon-module');
+        const accessOverlay = document.getElementById('access-overlay');
+        const systemWorkspace = document.getElementById('system-workspace');
+        const entryBtn = document.getElementById('entry-btn');
+        const initLoader = document.getElementById('init-loader');
         
-        let sessionStartTime = Date.now();
+        let sessionStartTime = 0;
+        let isSystemUnlocked = false;
 
         // UTILS
         function addLog(msg, type = 'system') {
             const time = new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
             const div = document.createElement('div');
-            div.className = type === 'error' ? 'text-[#FF3131]' : type === 'user' ? 'text-white' : 'text-[#00FF41]/80';
+            div.className = type === 'error' ? 'text-[#FF3131]' : type === 'user' ? 'text-white font-bold' : 'text-[#00FF41]/80';
             div.innerHTML = `<span class="opacity-30 mr-2">[${time}]</span> ${msg}`;
             cliOutput.appendChild(div);
             cliOutput.scrollTop = cliOutput.scrollHeight;
+        }
+
+        // ACCESS SEQUENCE
+        entryBtn.addEventListener('click', async () => {
+            if (isSystemUnlocked) return;
+
+            // Start animation
+            entryBtn.classList.add('pointer-events-none');
+            document.getElementById('btn-text').innerText = "SYNCHRONIZING...";
+            initLoader.style.width = "100%";
+            addLog("Access request received. Verification pending...", "system");
+
+            // Sequence simulation
+            setTimeout(() => {
+                document.getElementById('access-title').innerText = "ACCESS GRANTED";
+                document.getElementById('access-title').className = "text-2xl font-bold tracking-[0.6em] uppercase text-center mb-4 text-[#00FF41] scale-110 transition-all";
+                document.getElementById('power-icon-container').className = "w-20 h-20 border-2 border-[#00FF41] rounded-full flex items-center justify-center mb-8 bg-[#00FF41] text-black shadow-[0_0_40px_rgba(0,255,65,0.4)] transition-all";
+                addLog("Mainframe authentication successful.", "system");
+            }, 1000);
+
+            setTimeout(() => {
+                unlockSystem();
+            }, 2000);
+        });
+
+        function unlockSystem() {
+            isSystemUnlocked = true;
+            sessionStartTime = Date.now();
+            
+            // UI Transition
+            accessOverlay.style.opacity = '0';
+            setTimeout(() => accessOverlay.style.visibility = 'hidden', 1000);
+            
+            systemWorkspace.classList.remove('system-locked');
+            systemWorkspace.classList.add('system-unlocked');
+            document.getElementById('header-metrics').classList.remove('opacity-0');
+            
+            addLog("Shell established. Environment ready.", "system");
+            animateStats();
+            startLoops();
         }
 
         // WAVE CANVAS
@@ -275,25 +343,27 @@ load
 
         function drawWave() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.strokeStyle = '#00FF41';
+            ctx.strokeStyle = isSystemUnlocked ? '#00FF41' : 'rgba(0, 255, 65, 0.1)';
             ctx.lineWidth = 1;
             ctx.beginPath();
             
             for (let x = 0; x < canvas.width; x++) {
-                const y = canvas.height / 2 + Math.sin(x * 0.05 + phase) * 15;
+                const waveHeight = isSystemUnlocked ? 15 : 2;
+                const y = canvas.height / 2 + Math.sin(x * 0.05 + phase) * waveHeight;
                 if (x === 0) ctx.moveTo(x, y);
                 else ctx.lineTo(x, y);
             }
             
             ctx.stroke();
-            phase += 0.1;
+            phase += isSystemUnlocked ? 0.1 : 0.01;
             requestAnimationFrame(drawWave);
         }
 
         // CLI LOGIC
         cliInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
+            if (e.key === 'Enter' && isSystemUnlocked) {
                 const cmd = cliInput.value.toLowerCase().trim();
+                if (!cmd) return;
                 addLog(`guest@phantom:~$ ${cmd}`, 'user');
                 processCommand(cmd);
                 cliInput.value = '';
@@ -303,7 +373,7 @@ load
         function processCommand(cmd) {
             switch(cmd) {
                 case 'help':
-                    addLog("Available: scan, status, clear, siphon, exit");
+                    addLog("Available: scan, status, clear, siphon, disconnect");
                     break;
                 case 'clear':
                     cliOutput.innerHTML = '';
@@ -315,17 +385,20 @@ load
                 case 'scan':
                     addLog("Scanning local nodes...");
                     setTimeout(() => addLog("Node Asia-4: ONLINE"), 500);
-                    setTimeout(() => addLog("Node US-East-2: OFFLINE", "error"), 1000);
                     break;
                 case 'siphon':
                     startSiphon();
                     break;
+                case 'disconnect':
+                    location.reload();
+                    break;
                 default:
-                    addLog(`Command not found: ${cmd}`, "error");
+                    addLog(`Unknown protocol: ${cmd}`, "error");
             }
         }
 
         function startSiphon() {
+            const siphonModule = document.getElementById('siphon-module');
             siphonModule.classList.remove('hidden');
             let progress = 0;
             const bar = document.getElementById('siphon-bar');
@@ -339,7 +412,7 @@ load
                     percent.innerText = '100%';
                     addLog("Siphon complete. Data mirrored to encrypted cache.", "system");
                     clearInterval(interval);
-                    setTimeout(() => siphonModule.classList.add('hidden'), 2000);
+                    setTimeout(() => siphonModule.classList.add('hidden'), 3000);
                 } else {
                     bar.style.width = `${progress}%`;
                     percent.innerText = `${Math.floor(progress)}%`;
@@ -349,13 +422,14 @@ load
 
         // SECURITY GATE
         async function checkVPN() {
+            addLog("Executing perimeter verification...", "system");
             try {
                 const res = await fetch('https://ipapi.co/json/');
                 const data = await res.json();
                 
-                document.getElementById('exp-ip').innerText = data.ip;
-                document.getElementById('exp-isp').innerText = data.org;
-                document.getElementById('exp-loc').innerText = `${data.city}, ${data.country_code}`;
+                document.getElementById('exp-ip').innerText = data.ip || "EXPOSED";
+                document.getElementById('exp-isp').innerText = data.org || "GENERIC_ISP";
+                document.getElementById('exp-loc').innerText = `${data.city || 'LOC'}, ${data.country_code || '??'}`;
                 document.getElementById('stat-latency').innerText = `${Math.floor(Math.random() * 50) + 10}ms`;
 
                 if (!data.proxy) {
@@ -364,28 +438,26 @@ load
                     triggerSecure();
                 }
             } catch (err) {
-                addLog("Security check failed. Using failsafe settings.", "error");
-                triggerSecure(); // Failsafe
+                addLog("API Error: Secure fallback activated.", "error");
+                triggerSecure(); 
             }
         }
 
         function triggerAlert() {
             gateOverlay.style.display = 'flex';
-            document.getElementById('status-label').innerText = "VULNERABLE";
+            document.getElementById('status-label').innerText = "UNPROTECTED";
             document.getElementById('status-label').className = "text-[10px] font-bold uppercase tracking-widest text-[#FF3131]";
             document.getElementById('security-badge').className = "flex items-center gap-3 bg-[#FF3131]/5 border border-[#FF3131]/30 px-4 py-1.5 rounded-sm shadow-[0_0_15px_rgba(255,49,49,0.2)]";
             document.getElementById('status-icon').innerHTML = '<i data-lucide="unlock" class="w-3 h-3 text-[#FF3131]"></i>';
             lucide.createIcons();
-            addLog("ALERT: Unsecured perimeter detected.", "error");
+            addLog("WARNING: Session exposure risk is high.", "error");
         }
 
         function triggerSecure() {
-            document.getElementById('status-label').innerText = "SECURE";
+            document.getElementById('status-label').innerText = "TUNNEL VERIFIED";
             document.getElementById('status-icon').innerHTML = '<i data-lucide="lock" class="w-3 h-3"></i>';
-            document.getElementById('status-icon').classList.remove('animate-spin');
             lucide.createIcons();
-            addLog("Encrypted tunnel verified. Global nodes synced.");
-            animateStats();
+            addLog("Encrypted tunnel verified. Proxy signature valid.");
         }
 
         function animateStats() {
@@ -395,58 +467,49 @@ load
                 document.getElementById('stat-encryption').innerText = `${p}%`;
                 document.getElementById('stat-anonymity').innerText = `${p+1}%`;
                 if (p >= 98) clearInterval(int);
-            }, 50);
+            }, 30);
         }
 
-        // Threat Feed Loop
+        function startLoops() {
+            setInterval(updateThreats, 5000);
+            setInterval(() => {
+                if (!isSystemUnlocked) return;
+                const now = new Date();
+                document.getElementById('utc-clock').innerText = `UTC: ${now.getUTCHours().toString().padStart(2, '0')}:${now.getUTCMinutes().toString().padStart(2, '0')}:${now.getUTCSeconds().toString().padStart(2, '0')}`;
+                document.getElementById('uptime').innerText = `Uptime: ${Math.floor((Date.now() - sessionStartTime) / 1000)}s`;
+            }, 1000);
+        }
+
         const threatMsgs = [
             "Attempted brute-force on Node-7",
             "DDoS mitigation active in US-West",
             "Packet sniff detected at gateway",
             "Zero-day exploit blocked",
-            "Rootkit scan: 100% CLEAN"
+            "Identity rotation successful"
         ];
+
         function updateThreats() {
+            if (!isSystemUnlocked) return;
             const feed = document.getElementById('threat-feed');
             const msg = threatMsgs[Math.floor(Math.random() * threatMsgs.length)];
             const div = document.createElement('div');
-            div.className = "border-l border-[#FF3131]/30 pl-2 opacity-0 transition-opacity duration-500";
+            div.className = "border-l border-[#FF3131]/30 pl-2 animate-pulse";
             div.innerHTML = `<div class="opacity-40 uppercase text-[7px]">${new Date().toLocaleTimeString()}</div>${msg}`;
             feed.prepend(div);
-            setTimeout(() => div.classList.remove('opacity-0'), 100);
             if (feed.children.length > 8) feed.lastChild.remove();
         }
 
-        // CLOCK
-        setInterval(() => {
-            const now = new Date();
-            clockEl.innerText = `UTC: ${now.getUTCHours().toString().padStart(2, '0')}:${now.getUTCMinutes().toString().padStart(2, '0')}:${now.getUTCSeconds().toString().padStart(2, '0')}`;
-            uptimeEl.innerText = `Uptime: ${Math.floor((Date.now() - sessionStartTime) / 1000)}s`;
-        }, 1000);
-
-        // INIT
+        // INITIALIZATION
         document.getElementById('gate-proceed').addEventListener('click', () => {
             gateOverlay.style.display = 'none';
-            addLog("Bypassing security warnings. Session exposure active.", "error");
-            animateStats();
-        });
-
-        document.getElementById('entry-btn').addEventListener('click', function() {
-            addLog("Synchronizing mainframe...", "system");
-            this.innerHTML = "SYNCING...";
-            setTimeout(() => {
-                this.innerHTML = "ACCESS GRANTED";
-                this.className = "w-full bg-[#00FF41] border-2 border-[#00FF41] py-5 text-sm font-bold tracking-[0.8em] uppercase text-black transition-all duration-500 shadow-[0_0_30px_rgba(0,255,65,0.4)]";
-                addLog("Mainframe online. Welcome, Guest.");
-            }, 1000);
+            addLog("User bypassed security. Protocol exposure acknowledged.", "error");
         });
 
         window.onload = () => {
             canvas.width = canvas.offsetWidth;
             canvas.height = canvas.offsetHeight;
             drawWave();
-            setTimeout(checkVPN, 1000);
-            setInterval(updateThreats, 5000);
+            setTimeout(checkVPN, 800);
         };
     </script>
 </body>
